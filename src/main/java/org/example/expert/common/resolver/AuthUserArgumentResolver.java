@@ -1,9 +1,10 @@
-package org.example.expert.config;
+package org.example.expert.common.resolver;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.example.expert.domain.auth.exception.AuthException;
-import org.example.expert.domain.common.annotation.Auth;
-import org.example.expert.domain.common.dto.AuthUser;
+import org.example.expert.common.exception.AuthException;
+import org.example.expert.common.annotation.Auth;
+import org.example.expert.common.dto.AuthUser;
+import org.example.expert.common.exception.ExceptionCode;
 import org.example.expert.domain.user.enums.UserRole;
 import org.springframework.core.MethodParameter;
 import org.springframework.lang.Nullable;
@@ -21,7 +22,7 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
         // @Auth 어노테이션과 AuthUser 타입이 함께 사용되지 않은 경우 예외 발생
         if (hasAuthAnnotation != isAuthUserType) {
-            throw new AuthException("@Auth와 AuthUser 타입은 함께 사용되어야 합니다.");
+            throw new AuthException(ExceptionCode.INVALID_AUTH_CONFIGURATION);
         }
 
         return hasAuthAnnotation;

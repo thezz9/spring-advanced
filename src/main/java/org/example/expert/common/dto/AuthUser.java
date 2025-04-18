@@ -1,4 +1,4 @@
-package org.example.expert.domain.common.dto;
+package org.example.expert.common.dto;
 
 import lombok.Getter;
 import org.example.expert.domain.user.enums.UserRole;

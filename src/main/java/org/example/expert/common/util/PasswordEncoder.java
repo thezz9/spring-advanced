@@ -1,4 +1,4 @@
-package org.example.expert.config;
+package org.example.expert.common.util;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
@@ -6,8 +6,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class PasswordEncoder {
 
+    // 암호화 강도 조절
+    private static final int COST = 12;
+
     public String encode(String rawPassword) {
-        return BCrypt.withDefaults().hashToString(BCrypt.MIN_COST, rawPassword.toCharArray());
+        return BCrypt.withDefaults().hashToString(COST, rawPassword.toCharArray());
     }
 
     public boolean matches(String rawPassword, String encodedPassword) {

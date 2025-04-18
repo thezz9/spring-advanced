@@ -1,4 +1,4 @@
-package org.example.expert.domain.common.aop;
+package org.example.expert.common.aop;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +21,7 @@ public class Logger {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Pointcut("@annotation(org.example.expert.domain.common.aop.AdminLoggingTarget)")
+    @Pointcut("@annotation(org.example.expert.common.annotation.AdminLoggingTarget)")
     private void adminApi() {}
 
     @Around("adminApi()")
