@@ -1,6 +1,7 @@
 package org.example.expert.domain.comment.service;
 
 import org.example.expert.domain.comment.dto.request.CommentSaveRequest;
+import org.example.expert.domain.comment.dto.response.CommentResponse;
 import org.example.expert.domain.comment.dto.response.CommentSaveResponse;
 import org.example.expert.domain.comment.entity.Comment;
 import org.example.expert.domain.comment.repository.CommentRepository;
@@ -10,64 +11,123 @@ import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.enums.UserRole;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("CommentServiceTest")
 class CommentServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+
     @Mock
     private TodoRepository todoRepository;
+
     @InjectMocks
     private CommentService commentService;
 
-    @Test
-    public void comment_등록_중_할일을_찾지_못해_에러가_발생한다() {
-        // given
-        long todoId = 1;
-        CommentSaveRequest request = new CommentSaveRequest("contents");
-        AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
+    @Nested
+    @DisplayName("댓글 저장 테스트")
+    class saveComment {
 
-        given(todoRepository.findById(anyLong())).willReturn(Optional.empty());
+        @Test
+        @DisplayName("할 일을 찾을 수 없으면 예외를 던진다.")
+        public void shouldThrowException_whenTodoNotFound() {
 
-        // when
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
-            commentService.saveComment(authUser, todoId, request);
-        });
+            // given
+            long todoId = 1;
+            CommentSaveRequest request = new CommentSaveRequest("contents");
+            AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
 
-        // then
-        assertEquals("Todo not found", exception.getMessage());
+            given(todoRepository.findById(anyLong())).willReturn(Optional.empty());
+
+            // when
+            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+                commentService.saveComment(authUser, todoId, request);
+            });
+
+            // then
+            assertEquals("일정이 존재하지 않습니다.", exception.getMessage());
+        }
+
+        @Test
+        @DisplayName("정상적으로 코멘트를 저장한다.")
+        public void shouldSaveComment_whenValidInput() {
+
+            // given
+            long todoId = 1;
+            CommentSaveRequest request = new CommentSaveRequest("testContents");
+            AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
+            User mockUser = User.fromAuthUser(authUser);
+            Todo mockTodo = new Todo("testTitle", "testContents", "testWeather", mockUser);
+            Comment mockComment = new Comment(request.getContents(), mockUser, mockTodo);
+
+            given(todoRepository.findById(anyLong())).willReturn(Optional.of(mockTodo));
+            given(commentRepository.save(any())).willReturn(mockComment);
+
+            // when
+            CommentSaveResponse result = commentService.saveComment(authUser, todoId, request);
+
+            // then
+            assertNotNull(result);
+        }
+
     }
 
-    @Test
-    public void comment를_정상적으로_등록한다() {
-        // given
-        long todoId = 1;
-        CommentSaveRequest request = new CommentSaveRequest("contents");
-        AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
-        User user = User.fromAuthUser(authUser);
-        Todo todo = new Todo("title", "title", "contents", user);
-        Comment comment = new Comment(request.getContents(), user, todo);
+    @Nested
+    @DisplayName("댓글 조회 테스트")
+    class getComments {
 
-        given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
-        given(commentRepository.save(any())).willReturn(comment);
+        @Test
+        @DisplayName("등록된 코멘트가 없으면 빈 리스트를 반환한다.")
+        public void shouldReturnEmptyList_whenNoCommentsExist() {
 
-        // when
-        CommentSaveResponse result = commentService.saveComment(authUser, todoId, request);
+            // given
+            given(commentRepository.findByTodoIdWithUser(anyLong())).willReturn(Collections.emptyList());
 
-        // then
-        assertNotNull(result);
+            // when
+            List<CommentResponse> result = commentService.getComments(1L);
+
+            // then
+            assertThat(result).isEmpty();
+
+        }
+
+        @Test
+        @DisplayName("정상적으로 코멘트를 반환한다.")
+        public void shouldReturnCommentList_whenCommentsExist() {
+
+            // given
+            AuthUser authUser = new AuthUser(1L, "test@email.com", UserRole.USER);
+            User mockUser = User.fromAuthUser(authUser);
+            Todo mockTodo = new Todo("testTitle", "testContents", "testWeather", mockUser);
+            Comment mockComment = new Comment("testContents", mockUser, mockTodo);
+
+            given(commentRepository.findByTodoIdWithUser(anyLong())).willReturn(List.of(mockComment));
+
+            // when
+            List<CommentResponse> result = commentService.getComments(1L);
+
+            // then
+            assertThat(result.get(0).getContents()).isEqualTo("testContents");
+            assertThat(result.get(0).getUser().getEmail()).isEqualTo("test@email.com");
+        }
+
     }
 }

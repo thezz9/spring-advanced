@@ -16,7 +16,7 @@ public class CommentAdminController {
 
     @AdminLoggingTarget
     @DeleteMapping("/admin/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable long commentId) {
+    public ResponseEntity<Void> deleteComment(@PathVariable("commentId") long commentId) {
         commentAdminService.deleteComment(commentId);
         return ResponseEntity.noContent().build();
     }

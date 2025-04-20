@@ -18,7 +18,8 @@ public class UserAdminController {
 
     @AdminLoggingTarget
     @PatchMapping("/admin/users/{userId}")
-    public ResponseEntity<Void> changeUserRole(@PathVariable long userId, @RequestBody UserRoleChangeRequest userRoleChangeRequest) {
+    public ResponseEntity<Void> changeUserRole(@PathVariable("userId") long userId,
+                                               @RequestBody UserRoleChangeRequest userRoleChangeRequest) {
         userAdminService.changeUserRole(userId, userRoleChangeRequest);
         return ResponseEntity.ok().build();
     }
